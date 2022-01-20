@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "github.com/vipindasvg/go-kit-crud/user/pb";
+
+service UserService {
+    rpc CreateUser (CreateUserRequest) returns (CreateUserResponse) {}
+    rpc UserLogin  (UserLoginRequest)  returns (UserLoginResponse) {}
+    rpc ListUsers  (ListUserRequest)  returns (ListUserResponse) {}
+}
+
+message User {
+    string id =1;
+    string name =2;
+    string password =3;
+    string email_id =4;
+}
+
+message CreateUserRequest  {
+   User user = 1;
+}
+
+message CreateUserResponse {
+}
+
+message UserLoginRequest  {
+    string email_id =1;  
+    string password =2;
+}
+
+message UserLoginResponse {
+    User user = 1;
+    string status = 2;
+    string token = 3;
+}
+
+message ListUserRequest {
+
+}
+
+message ListUserResponse {
+   repeated User users = 1;
+}
