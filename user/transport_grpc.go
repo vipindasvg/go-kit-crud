@@ -19,6 +19,7 @@ import (
 type grpcServer struct {
 	createUser kitgrpc.Handler
 	userLogin  kitgrpc.Handler
+	listUsers  kitgrpc.Handler
 	logger         log.Logger
 	pb.UnimplementedUserServiceServer
 }
@@ -64,12 +65,12 @@ func (s *grpcServer) UserLogin(ctx oldcontext.Context, req *pb.UserLoginRequest)
 }
 
 // Generate glues the gRPC method to the Go kit service method
-func (s *grpcServer) ListUser(ctx oldcontext.Context, req *pb.CreateUserRequest) (*pb.CreateUserResponse, error) {
-	_, rep, err := s.listUser.ServeGRPC(ctx, req)
+func (s *grpcServer) ListUsers(ctx oldcontext.Context, req *pb.ListUserRequest) (*pb.ListUserResponse, error) {
+	_, rep, err := s.listUsers.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	return rep.(*pb.CreateUserResponse), nil
+	return rep.(*pb.ListUserResponse), nil
 }
 
 // decodeCreateCustomerRequest decodes the incoming grpc payload to our go kit payload
@@ -92,10 +93,12 @@ func encodeCreateUserResponseGrpc(_ context.Context, response interface{}) (inte
 }
 
 // decodeCreateCustomerRequest decodes the incoming grpc payload to our go kit payload
-func decodeListUsersRequestGrpc(_ context.Context, request interface{}) (interface{}, error) {
-	req := request.(*pb.ListUsersRequest)
+func decodeUserLoginRequestGrpc(_ context.Context, request interface{}) (interface{}, error) {
+	req := request.(*pb.UserLoginRequest)
 	fmt.Println(req)
-	return ListUsersRequest{
+	return UserLoginRequest{
+		EmailId : req.EmailId,
+		Password: req.Password,
 	}, nil
 }
 
@@ -116,19 +119,24 @@ func encodeUserLoginResponseGrpc(_ context.Context, response interface{}) (inter
 
 // decodeCreateCustomerRequest decodes the incoming grpc payload to our go kit payload
 func decodeListUsersRequestGrpc(_ context.Context, request interface{}) (interface{}, error) {
-	req := request.(*pb.ListUsersRequest)
-	users:= User{ Id:req.User.Id, Name: req.User.Name, Password: req.User.Password, EmailId:req.User.EmailId}
 	return CreateUserRequest{
-		user : &users,
 	}, nil
 }
 
 // encodeCreateCustomerResponse encodes the outgoing go kit payload to the grpc payload
 func encodeListUsersResponseGrpc(_ context.Context, response interface{}) (interface{}, error) {
-	res := response.(CreateUserResponse)
+	res := response.(ListUsersResponse)
 	err := getError(res.Err)
+	var pbUsers []*pb.User
+	for _,u := range res.users {
+		pbUser := new(pb.User)
+		pbUser.Name = u.Name
+		pbUser.EmailId = u.EmailId
+		pbUser.Id = u.Id
+		pbUsers = append(pbUsers, pbUser)
+	}
 	if err == nil {
-		return &pb.CreateUserResponse{}, nil
+		return &pb.ListUserResponse{Users: pbUsers}, nil
 	}
 	return nil, err
 }

@@ -17,6 +17,10 @@ type repo struct {
 	logger log.Logger
 }
 
+type N1qlUser struct {
+    User User `json:"user"`
+}
+
 func NewRepo(logger log.Logger) Repository {
 	return &repo{
 		logger: log.With(logger, "repo", "sql"),
@@ -68,6 +72,8 @@ func (repo *repo) UserLogin(ctx context.Context, EmailId string, Password string
 	jsonOut , err := json.Marshal(row["user"])
 	err1 := json.Unmarshal(jsonOut, &user)
 	fmt.Println(err1)
+	fmt.Println(Password)
+	fmt.Println(user.Password)
 	err2 := bcrypt.CompareHashAndPassword([]byte(Password), []byte(user.Password))
 	fmt.Println(err2)
 	if err2 != nil {
@@ -78,7 +84,7 @@ func (repo *repo) UserLogin(ctx context.Context, EmailId string, Password string
 	return nil, nil	
 }
 
-func (repo *repo) ListUsers(ctx context.Context) ([]*User, error) {
+func (repo *repo) ListUsers(ctx context.Context) ([]User, error) {
 	cluster, err := gocb.Connect("couchbase://localhost")
 	fmt.Println(err)
     cluster.Authenticate(gocb.PasswordAuthenticator{
@@ -88,25 +94,20 @@ func (repo *repo) ListUsers(ctx context.Context) ([]*User, error) {
 
     bucket, err := cluster.OpenBucket("user", "")
 	fmt.Println(err)
-	query := "SELECT * FROM `user`;"
-	rows, err := cluster.Query(query, &gocb.QueryOptions{})
+	myQuery := gocb.NewN1qlQuery("SELECT * FROM `user`;")
+
+	//fmt.Println(myParams)
+	
+	rows, err := bucket.ExecuteN1qlQuery(myQuery, nil)
 	// check query was successful
+	var row N1qlUser
 	if err != nil {
 		panic(err)
 	}
 	var users []User
 	// iterate over rows
-	for rows.Next() {
-		var u User// this could also just be an interface{} type
-		err := rows.Row(&u)
-		if err != nil {
-			panic(err)
-		}
-		users = append(users, u)
+	for rows.Next(&row) {
+		users = append(users, row.User)
 	}	
-	err = rows.Err()
-	if err != nil {
-		panic(err)
-	}
 	return users, nil
 }

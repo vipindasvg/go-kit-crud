@@ -12,4 +12,5 @@ type User struct {
 type Repository interface {
 	CreateUser(ctx context.Context, user User) error
 	UserLogin(ctx context.Context, EmailId string, Password string) (*User, error)
+	ListUsers(ctx context.Context) ([]User, error)
 }

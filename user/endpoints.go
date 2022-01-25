@@ -44,7 +44,7 @@ type UserLoginRequest struct {
 
 // CreateRequest holds the request parameters for the Create method.
 type ListUsersResponse struct {
-	users []*User `json:"users"`  
+	users []User `json:"users"`  
 	Err error  `json:"error,omitempty"`
 }
 
@@ -106,8 +106,10 @@ func makeUserLoginEndpoint(s Service) endpoint.Endpoint {
 }
 
 func makeListUsersEndpoint(s Service) endpoint.Endpoint {
+	fmt.Println("in make list users")
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		lusers, err := s.ListUsers(ctx)
+		fmt.Println(lusers)
 		return ListUsersResponse{users: lusers, Err: err}, nil
 	}
 }

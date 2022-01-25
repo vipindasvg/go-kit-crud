@@ -54,6 +54,7 @@ func main() {
 	// Create Go kit endpoints for the Order Service
 	var endpoints usersvc.Endpoints
 	{
+		fmt.Println("endpoints")
 		endpoints = usersvc.MakeEndpoints(svc)
 	}
 	// set-up grpc transport

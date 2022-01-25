@@ -19,7 +19,7 @@ var (
 type Service interface {
 	CreateUser(ctx context.Context, user *User) (string, error)
 	UserLogin(ctx context.Context, EmailId string, Password string) (*User, error)
-	ListUsers(ctx context.Context) ([]*User, error)
+	ListUsers(ctx context.Context) ([]User, error)
 }
 
 // service implements the Order Service
@@ -63,9 +63,11 @@ type service struct {
  }
 
 
- func (s *service) ListUsers(ctx context.Context) ([]*User, error) {
+ func (s *service) ListUsers(ctx context.Context) ([]User, error) {
 	logger := log.With(s.logger, "method", "list")
-	if users, err := s.repository.ListUsers(ctx); err != nil {
+	fmt.Println("in service list users")
+	users, err := s.repository.ListUsers(ctx);
+	if err != nil {
 	   level.Error(logger).Log("err", err)
 	   return nil, ErrCmdRepository
 	}
